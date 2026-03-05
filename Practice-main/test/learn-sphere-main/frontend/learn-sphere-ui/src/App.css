@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f8fafc;
+  --text: #0f172a;
+  --card: rgba(255, 255, 255, 0.75);
+  --border: rgba(17, 24, 39, 0.12);
+  --footer-h: 64px; /* keep in sync with Footer height */
+}
+
+[data-theme="dark"] {
+  --bg: radial-gradient(1200px 600px at 25% -10%, #0b1b3a 0%, #0d1221 40%, #080c17 100%);
+  --text: #e7e9ee;
+  --card: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.10);
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* If you’d rather control spacing using CSS instead of Tailwind pb-[64px]: */
+/* .with-footer-pad { padding-bottom: var(--footer-h); } */
+
+@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+.marquee { animation: marquee 28s linear infinite; }
+
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
