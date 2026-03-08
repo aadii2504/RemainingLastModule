@@ -13,6 +13,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import CoursesAdmin from "./pages/admin/CoursesAdmin";
 import UsersAdmin from "./pages/admin/UsersAdmin";
 import LoginPage from "./pages/LoginPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import EnrolledCourses from "./pages/EnrolledCourses";
@@ -41,6 +42,7 @@ export default function App() {
           {/* Public routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/register" element={<RegistrationPage />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
