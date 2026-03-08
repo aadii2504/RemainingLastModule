@@ -83,4 +83,19 @@ public class AuthService : IAuthService
 			Role = user.Role
 		};
 	}
+
+	public async Task<bool> ResetPasswordAsync(ResetPasswordRequestDto req, CancellationToken ct)
+	{
+		var email = req.Email.Trim().ToLower();
+
+		var user = await _users.GetByEmailAsync(email, ct);
+		if (user is null)
+			throw new InvalidOperationException("User with this email not found");
+
+		user.PasswordHash = _hasher.HashPassword(user, req.NewPassword);
+		
+		await _users.SaveChangesAsync(ct);
+
+		return true;
+	}
 }

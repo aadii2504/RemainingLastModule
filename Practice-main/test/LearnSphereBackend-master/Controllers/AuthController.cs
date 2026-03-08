@@ -61,4 +61,19 @@ public class AuthController : ControllerBase
 	    _logger.LogInformation("user is logged out email - {Email}", req.Email);
 	    return Ok(new { message = "Logged out" });
 	}
+
+	[HttpPost("reset-password")]
+	public async Task<IActionResult> ResetPassword(ResetPasswordRequestDto req, CancellationToken ct)
+	{
+		try
+		{
+			await _auth.ResetPasswordAsync(req, ct);
+			_logger.LogInformation("user reset password email - {Email}", req.Email);
+			return Ok(new { message = "Password updated successfully" });
+		}
+		catch (InvalidOperationException ex)
+		{
+			return BadRequest(ex.Message);
+		}
+	}
 }

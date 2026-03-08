@@ -13,6 +13,7 @@ using MyProject.Api.Services.Interfaces;
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
     .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
     .CreateLogger();
 
