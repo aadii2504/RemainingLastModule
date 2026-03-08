@@ -13,7 +13,6 @@ using MyProject.Api.Services.Interfaces;
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
     .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
     .CreateLogger();
 
@@ -133,9 +132,6 @@ app.UseSwaggerUI();
 
 // Add global exception handling middleware
     app.UseMiddleware<GlobalExceptionMiddleware>();
-
-    // Add Serilog request logging
-    app.UseSerilogRequestLogging();
 
     app.UseAuthentication();
     app.UseAuthorization();

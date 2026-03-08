@@ -9,8 +9,13 @@ namespace MyProject.Api.Controllers;
 public class AuthController : ControllerBase
 {
 	private readonly IAuthService _auth;
+	private readonly ILogger<AuthController> _logger;
 
-	public AuthController(IAuthService auth) => _auth = auth;
+	public AuthController(IAuthService auth, ILogger<AuthController> logger)
+	{
+		_auth = auth;
+		_logger = logger;
+	}
 
 	[HttpPost("register")]
 	public async Task<ActionResult<AuthResponseDto>> Register(RegisterRequestDto req, CancellationToken ct)
@@ -32,11 +37,28 @@ public class AuthController : ControllerBase
 		try
 		{
 			var result = await _auth.LoginAsync(req, ct);
+			
+			if (result.Role.ToLower() == "admin")
+			{
+			    _logger.LogInformation("admin is signed in email - {Email}", result.Email);
+			}
+			else
+			{
+			    _logger.LogInformation("user is signed in with email - {Email}", result.Email);
+			}
+			
 			return Ok(result);
 		}
 		catch (UnauthorizedAccessException ex)
 		{
 			return Unauthorized(ex.Message);
 		}
+	}
+
+	[HttpPost("logout")]
+	public IActionResult Logout([FromBody] LoginRequestDto req)
+	{
+	    _logger.LogInformation("user is logged out email - {Email}", req.Email);
+	    return Ok(new { message = "Logged out" });
 	}
 }

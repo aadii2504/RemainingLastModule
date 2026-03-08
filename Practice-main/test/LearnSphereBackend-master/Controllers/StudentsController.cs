@@ -14,11 +14,15 @@ public class StudentsController : ControllerBase
 {
 	private readonly IStudentRepository _students;
 	private readonly IEnrollmentRepository _enrollments;
+	private readonly ICourseRepository _courses;
+	private readonly ILogger<StudentsController> _logger;
 
-	public StudentsController(IStudentRepository students, IEnrollmentRepository enrollments)
+	public StudentsController(IStudentRepository students, IEnrollmentRepository enrollments, ICourseRepository courses, ILogger<StudentsController> logger)
 	{
 		_students = students;
 		_enrollments = enrollments;
+		_courses = courses;
+		_logger = logger;
 	}
 
 	[Authorize]
@@ -157,6 +161,9 @@ public class StudentsController : ControllerBase
 		};
 
 		await _enrollments.AddAsync(enrollment);
+
+        var course = await _courses.GetByIdAsync(req.CourseId);
+		_logger.LogInformation("student - {Email} enrolled in course - {CourseName}", student.Email, course?.Title ?? "Unknown");
 
 		return Ok(new { message = "Enrolled successfully" });
 	}

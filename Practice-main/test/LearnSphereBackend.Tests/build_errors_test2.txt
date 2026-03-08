@@ -1,0 +1,18 @@
+﻿D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\AnalyticsServiceTests.cs(34,86): error CS0117: 'Course' does not contain a definition for 'CategoryId' [D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\LearnSphereBackend.Tests.csproj]
+D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\AnalyticsServiceTests.cs(34,102): error CS0117: 'Course' does not contain a definition for 'InstructorId' [D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\LearnSphereBackend.Tests.csproj]
+D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\AnalyticsServiceTests.cs(35,86): error CS0117: 'Course' does not contain a definition for 'CategoryId' [D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\LearnSphereBackend.Tests.csproj]
+D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\AnalyticsServiceTests.cs(35,102): error CS0117: 'Course' does not contain a definition for 'InstructorId' [D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\LearnSphereBackend.Tests.csproj]
+D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\AnalyticsServiceTests.cs(37,50): error CS0029: Cannot implicitly convert type 'int' to 'System.Guid' [D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\LearnSphereBackend.Tests.csproj]
+D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\AnalyticsServiceTests.cs(38,50): error CS0029: Cannot implicitly convert type 'int' to 'System.Guid' [D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\LearnSphereBackend.Tests.csproj]
+D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\AnalyticsServiceTests.cs(40,56): error CS0029: Cannot implicitly convert type 'int' to 'System.Guid' [D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\LearnSphereBackend.Tests.csproj]
+D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\AnalyticsServiceTests.cs(40,71): error CS0029: Cannot implicitly convert type 'int' to 'System.Guid' [D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\LearnSphereBackend.Tests.csproj]
+D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\AnalyticsServiceTests.cs(41,56): error CS0029: Cannot implicitly convert type 'int' to 'System.Guid' [D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\LearnSphereBackend.Tests.csproj]
+D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\AnalyticsServiceTests.cs(41,71): error CS0029: Cannot implicitly convert type 'int' to 'System.Guid' [D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\LearnSphereBackend.Tests.csproj]
+D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\AnalyticsServiceTests.cs(42,56): error CS0029: Cannot implicitly convert type 'int' to 'System.Guid' [D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\LearnSphereBackend.Tests.csproj]
+D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\AnalyticsServiceTests.cs(42,71): error CS0029: Cannot implicitly convert type 'int' to 'System.Guid' [D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\LearnSphereBackend.Tests.csproj]
+
+Build FAILED.
+    1 Warning(s)
+    12 Error(s)
+
+Time Elapsed 00:00:07.03

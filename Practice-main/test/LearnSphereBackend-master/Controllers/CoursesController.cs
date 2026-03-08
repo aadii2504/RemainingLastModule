@@ -16,6 +16,7 @@ public class CoursesController : ControllerBase
     private readonly ILessonRepository _lessonRepo;
     private readonly ICourseContentRepository _contentRepo;
     private readonly IFileUploadService _fileUploadService;
+    private readonly ILogger<CoursesController> _logger;
 
     public CoursesController(
         ICourseRepository courseRepo,
@@ -23,7 +24,7 @@ public class CoursesController : ControllerBase
         ILessonRepository lessonRepo,
         ICourseContentRepository contentRepo,
         IFileUploadService fileUploadService
-        , IStudentRepository studentRepo, IUserRepository userRepo)
+        , IStudentRepository studentRepo, IUserRepository userRepo, ILogger<CoursesController> logger)
     {
         _courseRepo = courseRepo;
         _chapterRepo = chapterRepo;
@@ -32,6 +33,7 @@ public class CoursesController : ControllerBase
         _fileUploadService = fileUploadService;
         _studentRepo = studentRepo;
         _userRepo = userRepo;
+        _logger = logger;
     }
     private readonly IStudentRepository _studentRepo;
     private readonly IUserRepository _userRepo;
@@ -143,6 +145,8 @@ public class CoursesController : ControllerBase
             };
 
             var created = await _courseRepo.AddAsync(course);
+
+            _logger.LogInformation("admin created a course - {CourseName}", created.Title);
 
             // Send notification to all students
             try
