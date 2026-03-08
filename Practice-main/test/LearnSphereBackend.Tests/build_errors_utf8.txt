@@ -1,0 +1,8 @@
+﻿D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\AuthServiceTests.cs(37,18): error CS0029: Cannot implicitly convert type 'int' to 'System.Guid' [D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\LearnSphereBackend.Tests.csproj]
+D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\AuthServiceTests.cs(99,18): error CS0029: Cannot implicitly convert type 'int' to 'System.Guid' [D:\FinalEvaluationCode\Practice-main\test\LearnSphereBackend.Tests\LearnSphereBackend.Tests.csproj]
+
+Build FAILED.
+    1 Warning(s)
+    2 Error(s)
+
+Time Elapsed 00:00:02.15

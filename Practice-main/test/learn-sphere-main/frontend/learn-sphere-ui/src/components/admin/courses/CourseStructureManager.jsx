@@ -315,7 +315,7 @@ export default function CourseStructureManager({
                                   lessonId: lesson.id,
                                 })
                               }
-                              className="px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 text-xs font-medium border border-green-500/20 rounded-md transition-all"
+                              className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded-md transition"
                             >
                               + Upload Content
                             </button>
@@ -426,7 +426,7 @@ export default function CourseStructureManager({
                             !newLesson[chapter.id]?.title?.trim() ||
                             lessonTitleErrors[chapter.id]
                           }
-                          className="md:col-span-2 py-2 bg-blue-500/10 hover:bg-blue-500/20 disabled:bg-slate-800 disabled:text-slate-500 disabled:border-slate-700 text-blue-400 border border-blue-500/20 text-sm font-medium rounded-md transition-all"
+                          className="md:col-span-2 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white text-sm font-semibold rounded transition"
                         >
                           {isCreatingLesson[chapter.id]
                             ? "Adding..."
@@ -476,7 +476,7 @@ export default function CourseStructureManager({
                       !newChapter.title.trim() ||
                       chapterTitleError
                     }
-                    className="w-full py-2.5 bg-blue-500/10 hover:bg-blue-500/20 disabled:bg-slate-800 disabled:border-slate-700 disabled:text-slate-500 text-blue-400 border border-blue-500/20 text-sm font-medium rounded-lg transition-all shadow-sm"
+                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white font-bold rounded-lg transition"
                   >
                     {isCreatingChapter ? "Adding..." : "+ Add Chapter"}
                   </button>
@@ -527,7 +527,7 @@ export default function CourseStructureManager({
                     !newChapter.title.trim() ||
                     chapterTitleError
                   }
-                  className="w-full py-2.5 bg-blue-500/10 hover:bg-blue-500/20 disabled:bg-slate-800 disabled:border-slate-700 disabled:text-slate-500 text-blue-400 border border-blue-500/20 text-sm font-medium rounded-lg transition-all shadow-sm"
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white font-bold rounded-lg transition"
                 >
                   {isCreatingChapter ? "Creating..." : "Create First Chapter"}
                 </button>
@@ -541,7 +541,7 @@ export default function CourseStructureManager({
           <div className="border-t border-slate-700 p-4 bg-slate-900/80">
             <button
               onClick={onClose}
-              className="w-full px-4 py-2 bg-transparent hover:bg-slate-800 text-slate-300 font-medium border border-slate-700 rounded-md transition-all"
+              className="w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition"
             >
               Close
             </button>

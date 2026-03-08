@@ -9,13 +9,9 @@ namespace MyProject.Api.Controllers;
 public class AuthController : ControllerBase
 {
 	private readonly IAuthService _auth;
-	private readonly ILogger<AuthController> _logger;
 
-	public AuthController(IAuthService auth, ILogger<AuthController> logger)
-	{
-		_auth = auth;
-		_logger = logger;
-	}
+	public AuthController(IAuthService auth) => _auth = auth;
+
 	[HttpPost("register")]
 	public async Task<ActionResult<AuthResponseDto>> Register(RegisterRequestDto req, CancellationToken ct)
 	{
@@ -42,12 +38,5 @@ public class AuthController : ControllerBase
 		{
 			return Unauthorized(ex.Message);
 		}
-	}
-
-	[HttpPost("logout")]
-	public IActionResult Logout([FromBody] LogoutRequestDto req)
-	{
-		_logger.LogInformation("User logged out. Email is {Email}", req.Email);
-		return Ok(new { message = "Logged out successfully" });
 	}
 }

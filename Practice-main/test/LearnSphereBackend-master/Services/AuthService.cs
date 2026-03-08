@@ -12,14 +12,12 @@ public class AuthService : IAuthService
 	private readonly IStudentRepository _students;
 	private readonly IJwtTokenService _jwt;
 	private readonly PasswordHasher<User> _hasher = new();
-	private readonly ILogger<AuthService> _logger;
 
-	public AuthService(IUserRepository users, IStudentRepository students, IJwtTokenService jwt, ILogger<AuthService> logger)
+	public AuthService(IUserRepository users, IStudentRepository students, IJwtTokenService jwt)
 	{
 		_users = users;
 		_students = students;
 		_jwt = jwt;
-		_logger = logger;
 	}
 
 	public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto req, CancellationToken ct)
@@ -53,8 +51,6 @@ public class AuthService : IAuthService
 
 		await _users.SaveChangesAsync(ct);
 
-		_logger.LogInformation("New user signed up successfully. Email: {Email}", user.Email);
-
 		return new AuthResponseDto
 		{
 			Token = _jwt.CreateToken(user),
@@ -70,25 +66,14 @@ public class AuthService : IAuthService
 
 		var user = await _users.GetByEmailAsync(email, ct);
 		if (user is null)
-		{
-			_logger.LogWarning("Sign in failed. Email not found: {Email}", email);
 			throw new UnauthorizedAccessException("Invalid email or password");
-		}
 
 		if (user.Status != "active")
-		{
-			_logger.LogWarning("Sign in failed. Account deactivated: {Email}", email);
 			throw new UnauthorizedAccessException("Account is deactivated");
-		}
 
 		var verify = _hasher.VerifyHashedPassword(user, user.PasswordHash, req.Password);
 		if (verify == PasswordVerificationResult.Failed)
-		{
-			_logger.LogWarning("Sign in failed. Invalid password for email: {Email}", email);
 			throw new UnauthorizedAccessException("Invalid email or password");
-		}
-
-		_logger.LogInformation("User signed in successfully with this email: {Email}", user.Email);
 
 		return new AuthResponseDto
 		{

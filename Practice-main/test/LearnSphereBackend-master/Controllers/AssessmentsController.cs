@@ -15,22 +15,55 @@ public class AssessmentsController : ControllerBase
     private readonly AppDbContext _db;
     public AssessmentsController(AppDbContext db) => _db = db;
 
+    private Assessment? _cachedAssessment;
+    private const string ASSESSMENT_UNLOCK_TYPE = "ASSESSMENT_AVAILABLE";
+
+    private async Task<Assessment?> GetAssessmentAsync(int courseId)
+    {
+        if (_cachedAssessment == null || _cachedAssessment.CourseId != courseId)
+        {
+            _cachedAssessment = await _db.Assessments
+                .AsNoTracking()
+                .Include(a => a.Questions)
+                .FirstOrDefaultAsync(a => a.CourseId == courseId);
+        }
+        return _cachedAssessment;
+    }
+
+    private void InvalidateAssessmentCache(int courseId)
+    {
+        if (_cachedAssessment?.CourseId == courseId)
+        {
+            _cachedAssessment = null;
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // ADMIN / STUDENT: View Assessment
+    // -----------------------------------------------------------------------
+
+    /// <summary>Get the assessment for a course (admin sees answers, student does not).</summary>
+    [HttpGet("course/{courseId}")]
+    [Authorize] // ensure we can check roles & hide answers from students
+    public async Task<IActionResult> GetByCourse(int courseId)
+    {
+        var assessment = await GetAssessmentAsync(courseId);
+        if (assessment == null) return Ok(null);
+
+        if (User.IsInRole("admin"))
+        {
+            return Ok(MapAssessmentAdmin(assessment));
+        }
+        else
+        {
+            // Student view: never include correct answers
+            return Ok(MapAssessmentStudent(assessment));
+        }
+    }
+
     // -----------------------------------------------------------------------
     // ADMIN: Manage Assessment for a Course
     // -----------------------------------------------------------------------
-
-    /// <summary>Get the assessment for a course (admin or student).</summary>
-    [HttpGet("course/{courseId}")]
-    public async Task<IActionResult> GetByCourse(int courseId)
-    {
-        var assessment = await _db.Assessments
-            .AsNoTracking()
-            .Include(a => a.Questions)
-            .FirstOrDefaultAsync(a => a.CourseId == courseId);
-
-        if (assessment == null) return Ok(null);
-        return Ok(MapAssessment(assessment));
-    }
 
     /// <summary>Admin: Upsert assessment for a course (create or update).</summary>
     [HttpPut("course/{courseId}")]
@@ -40,10 +73,7 @@ public class AssessmentsController : ControllerBase
         var course = await _db.Courses.AsNoTracking().FirstOrDefaultAsync(c => c.Id == courseId);
         if (course == null) return NotFound("Course not found.");
 
-        var existing = await _db.Assessments
-            .Include(a => a.Questions)
-            .FirstOrDefaultAsync(a => a.CourseId == courseId);
-
+        var existing = await GetAssessmentAsync(courseId);
         if (existing == null)
         {
             existing = new Assessment { CourseId = courseId, CreatedAt = DateTime.UtcNow };
@@ -59,15 +89,13 @@ public class AssessmentsController : ControllerBase
         existing.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-
         await UpsertQuestions(existing.Id, dto.Questions ?? new List<AssessmentQuestionDto>());
 
-        var fresh = await _db.Assessments
-            .AsNoTracking()
-            .Include(a => a.Questions)
-            .FirstAsync(a => a.Id == existing.Id);
+        // ✅ ensure we don't return stale cached data
+        InvalidateAssessmentCache(courseId);
+        var fresh = await GetAssessmentAsync(courseId);
 
-        return Ok(MapAssessment(fresh));
+        return Ok(MapAssessmentAdmin(fresh!));
     }
 
     /// <summary>Admin: Delete assessment for a course.</summary>
@@ -81,7 +109,10 @@ public class AssessmentsController : ControllerBase
         _db.Assessments.Remove(assessment);
         await _db.SaveChangesAsync();
 
-        // Clean up any existing notifications tied to this course
+        // ✅ clear cache after delete
+        InvalidateAssessmentCache(courseId);
+
+        // Clean up any existing notifications tied to this course (dedupe ledger remains)
         NotificationsController.RemoveNotificationsForCourse(courseId);
 
         return NoContent();
@@ -125,7 +156,7 @@ public class AssessmentsController : ControllerBase
                     var userGuid = GetUserGuid();
                     if (userGuid.HasValue)
                     {
-                        await NotifyAssessmentUnlockedIfEligibleAsync(userGuid.Value, studentId.Value, courseId);
+                        await NotifyAssessmentUnlockedIfEligibleAsync(userGuid.Value, courseId, studentId.Value);
                     }
                 }
             }
@@ -301,15 +332,15 @@ public class AssessmentsController : ControllerBase
                 enrollment.Score = score;
                 enrollment.Grade = score >= 80 ? "A" : score >= 60 ? "B" : "C";
             }
-            
+
             // Set attendance date when completed
             enrollment.Attendance = DateTime.UtcNow.ToString("yyyy-MM-dd");
-            
+
             if (passed)
             {
                 enrollment.CompletedAt = DateTime.UtcNow;
-                enrollment.Status = "Completed";
-                
+                enrollment.Status = "completed";
+
                 // Calculate due date (same logic as CheckEligibility)
                 DateTime? calculatedDueDate = null;
                 if (assessment.AccessDurationDays.HasValue)
@@ -341,6 +372,9 @@ public class AssessmentsController : ControllerBase
         }
 
         await _db.SaveChangesAsync();
+
+        // Remove notifications for the student and course after final assessment completion
+        NotificationsController.RemoveNotificationsForStudentCourse(studentId.Value, assessment.CourseId);
 
         return Ok(new
         {
@@ -383,7 +417,7 @@ public class AssessmentsController : ControllerBase
     // -----------------------------------------------------------------------
 
     /// <summary>
-    /// Student: Mark a lesson as completed. 
+    /// Student: Mark a lesson as completed.
     /// Emits a one-time unlock notification when eligibility transitions false → true.
     /// (Never emits after the student has any attempt.)
     /// </summary>
@@ -426,10 +460,24 @@ public class AssessmentsController : ControllerBase
         // Notify only on transition: previously not eligible -> now eligible (and only if no attempts exist)
         if (newEligibility.Exists && !prevEligibility.Eligible && newEligibility.Eligible)
         {
-            var userGuid = GetUserGuid();
-            if (userGuid.HasValue)
+            // ensure no attempts exist before sending (defensive)
+            var assessmentId = await _db.Assessments
+                .AsNoTracking()
+                .Where(a => a.CourseId == courseId)
+                .Select(a => a.Id)
+                .FirstOrDefaultAsync();
+
+            var hasAnyAttempt = assessmentId > 0 && await _db.AssessmentAttempts
+                .AsNoTracking()
+                .AnyAsync(a => a.AssessmentId == assessmentId && a.StudentId == studentId.Value);
+
+            if (!hasAnyAttempt)
             {
-                await NotifyAssessmentUnlockedIfEligibleAsync(userGuid.Value, studentId.Value, courseId);
+                var userGuid = GetUserGuid();
+                if (userGuid.HasValue)
+                {
+                    await NotifyAssessmentUnlockedIfEligibleAsync(userGuid.Value, courseId, studentId.Value);
+                }
             }
         }
 
@@ -523,7 +571,7 @@ public class AssessmentsController : ControllerBase
         await _db.SaveChangesAsync();
     }
 
-    private object MapAssessment(Assessment a) => new
+    private object MapAssessmentAdmin(Assessment a) => new
     {
         a.Id,
         a.CourseId,
@@ -546,15 +594,35 @@ public class AssessmentsController : ControllerBase
         })
     };
 
+    private object MapAssessmentStudent(Assessment a) => new
+    {
+        a.Id,
+        a.CourseId,
+        a.Title,
+        a.Description,
+        a.TimeLimitMinutes,
+        a.PassingScorePercentage,
+        a.MaxAttempts,
+        a.AccessDurationDays,
+        a.CreatedAt,
+        a.UpdatedAt,
+        // ❗ Never send correct answers to students
+        Questions = a.Questions.OrderBy(q => q.Order).Select(q => new
+        {
+            q.Id,
+            q.Text,
+            q.Type,
+            Options = SafeDeserialize<List<string>>(q.Options),
+            q.Order
+        })
+    };
+
     private static T SafeDeserialize<T>(string? json) where T : new()
     {
         if (string.IsNullOrWhiteSpace(json)) return new T();
         try { return JsonSerializer.Deserialize<T>(json) ?? new T(); }
         catch { return new T(); }
     }
-
-    private static string BuildAssessmentAvailableCode(int courseId, Guid userId)
-        => $"ASSESSMENT_AVAILABLE";
 
     private static TimeZoneInfo GetIstZone()
     {
@@ -780,59 +848,51 @@ public class AssessmentsController : ControllerBase
     /// <summary>
     /// Sends a one-time "Assessment Unlocked" notification when eligible now.
     /// NEVER notifies after the student has any attempt (started/completed/timed-out).
-    /// Prevents duplicates with a per-(course, student) code key.
+    /// Prevents duplicates with a per-(course, student) key + server ledger.
     /// ALWAYS includes a Due Date line: formatted when available; "Not configured" otherwise.
     /// </summary>
-    private async Task NotifyAssessmentUnlockedIfEligibleAsync(Guid userGuid, Guid studentId, int courseId)
+    private async Task NotifyAssessmentUnlockedIfEligibleAsync(Guid userGuid, int courseId, Guid studentGuid)
     {
-        var assessment = await _db.Assessments
-            .Include(a => a.Attempts.Where(at => at.StudentId == studentId))
-            .FirstOrDefaultAsync(a => a.CourseId == courseId);
+        // Block if the student has any attempt on this course (defensive)
+        var assessmentId = await _db.Assessments
+            .AsNoTracking()
+            .Where(a => a.CourseId == courseId)
+            .Select(a => a.Id)
+            .FirstOrDefaultAsync();
 
-        if (assessment == null) return;
+        if (assessmentId <= 0) return;
 
-        // Do not notify if student has any attempt for this assessment
         var hasAnyAttempt = await _db.AssessmentAttempts
             .AsNoTracking()
-            .AnyAsync(a => a.AssessmentId == assessment.Id && a.StudentId == studentId);
+            .AnyAsync(a => a.AssessmentId == assessmentId && a.StudentId == studentGuid);
+
         if (hasAnyAttempt) return;
 
-        // Detailed eligibility
-        var eligibility = await ComputeEligibilityAsync(studentId, courseId);
-        if (!eligibility.Exists || !eligibility.Eligible) return;
+        // Dedupe using ledger + existing notifications
+        if (NotificationsController.HasNotification(userGuid, courseId, ASSESSMENT_UNLOCK_TYPE)) return;
 
-        // Per-(course, student) code key prevents collisions across courses AND across students
-        var codeKey = BuildAssessmentAvailableCode(courseId, userGuid);
+        var assessment = await _db.Assessments.AsNoTracking().FirstOrDefaultAsync(a => a.CourseId == courseId);
+        if (assessment == null) return;
 
-        // Prevent duplicates (IMPORTANT: ideally consider BOTH read and unread)
-        if (NotificationsController.HasNotification(userGuid, courseId, codeKey))
-            return;
-
-        // Compute due date (try eligibility snapshot first, then compute explicitly)
-        DateTime? dueUtc = eligibility.DueDate
-            ?? await ComputeAssessmentDueDateAsync(studentId, courseId, assessment.AccessDurationDays);
-
+        // ✅ Load the course so we can use course.Title in the message
         var course = await _db.Courses.AsNoTracking().FirstOrDefaultAsync(c => c.Id == courseId);
-        var courseTitle = course?.Title ?? "your course";
+        if (course == null) return;
 
-        var istZone = GetIstZone();
+        // Compute due date using your rule and format in IST
+        var dueUtc = await ComputeAssessmentDueDateAsync(studentGuid, courseId, assessment.AccessDurationDays);
+        var ist = GetIstZone();
+        var dueText = assessment.AccessDurationDays.HasValue
+            ? (dueUtc.HasValue
+                ? TimeZoneInfo.ConvertTimeFromUtc(dueUtc.Value, ist).ToString("dd-MM-yyyy HH:mm:ss")
+                : "Not configured")
+            : "Not configured";
 
-        string dueText = "Due Date: Not configured";
-        if (dueUtc.HasValue)
-        {
-            var istDue = TimeZoneInfo.ConvertTimeFromUtc(dueUtc.Value, istZone);
-            dueText = $"Due Date (IST): {istDue:dd/MM/yyyy HH:mm:ss}";
-        }
-
-        var msg = $"Final assessment for '{courseTitle}' is now available.\n{dueText}";
-
-        // If NotificationsController pushes via SignalR, this is real-time for the UI.
-        NotificationsController.AddNotificationForUser(
+        NotificationsController.AddNotificationForUserOnce(
             userGuid,
             "Assessment Unlocked",
-            msg,
+            $"Final assessment for '{course.Title}' is now available. Due Date is: {dueText}",
             courseId,
-            codeKey
+            ASSESSMENT_UNLOCK_TYPE
         );
     }
 }

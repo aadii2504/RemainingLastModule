@@ -32,7 +32,8 @@ export const Navbar = () => {
 
     try {
       const data = await notificationApi.list(20);
-      const count = Array.isArray(data) ? data.filter((x) => !x.isRead).length : 0;
+      // API already returns ONLY unread items
+      const count = Array.isArray(data) ? data.length : 0;
 
       if (!mountedRef.current || inFlightStampRef.current !== stamp) return;
 
@@ -43,7 +44,7 @@ export const Navbar = () => {
   const startPolling = useCallback(() => {
     if (pollerRef.current) clearInterval(pollerRef.current);
 
-    // ⏱️ Poll every **1 second**
+    // ⏱️ Poll every 20 seconds (1s was excessive)
     pollerRef.current = setInterval(fetchUnread, 1000);
   }, [fetchUnread]);
 

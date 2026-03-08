@@ -168,15 +168,13 @@ export default function QuizManager({ courseId, structure }) {
           onClick={() => setEditingQuiz(null)}
           style={{
             alignSelf: "flex-start",
-            background: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            color: "#d1d5db",
-            padding: "6px 12px",
+            background: "transparent",
+            border: "1px solid var(--border)",
+            color: "#fff",
+            padding: "8px 14px",
             borderRadius: 6,
             cursor: "pointer",
             fontSize: 12,
-            fontWeight: "500",
-            transition: "all 0.2s ease",
           }}
         >
           ← Back to Quiz List
@@ -462,15 +460,13 @@ export default function QuizManager({ courseId, structure }) {
                       setCurrent({ ...q });
                     }}
                     style={{
-                      background: "rgba(255,255,255,0.05)",
-                      color: "#d1d5db",
-                      border: "1px solid rgba(255,255,255,0.1)",
+                      background: "transparent",
+                      color: "#fff",
+                      border: "1px solid rgba(255,255,255,0.3)",
                       padding: "4px 10px",
                       borderRadius: 4,
                       fontSize: 11,
-                      fontWeight: "500",
                       cursor: "pointer",
-                      transition: "all 0.2s ease",
                     }}
                   >
                     Edit
@@ -483,15 +479,13 @@ export default function QuizManager({ courseId, structure }) {
                       }))
                     }
                     style={{
-                      background: "rgba(239,68,68,0.1)",
+                      background: "transparent",
                       color: "#ef4444",
-                      border: "1px solid rgba(239,68,68,0.2)",
+                      border: "1px solid rgba(239,68,68,0.4)",
                       padding: "4px 10px",
                       borderRadius: 4,
                       fontSize: 11,
-                      fontWeight: "500",
                       cursor: "pointer",
-                      transition: "all 0.2s ease",
                     }}
                   >
                     Del
@@ -524,19 +518,17 @@ export default function QuizManager({ courseId, structure }) {
           style={{
             width: "100%",
             background:
-              saving || quizTitleError ? "rgba(16,185,129,0.3)" : "#10b981",
-            padding: "10px 16px",
-            borderRadius: 6,
+              saving || quizTitleError ? "rgba(5,150,105,0.5)" : "#059669",
+            padding: 16,
+            borderRadius: 8,
             color: "#fff",
-            fontWeight: "600",
-            border: "1px solid rgba(255,255,255,0.1)",
+            fontWeight: "bold",
+            border: "none",
             cursor: saving || quizTitleError ? "not-allowed" : "pointer",
-            fontSize: 13,
-            transition: "all 0.2s ease",
-            boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+            fontSize: 14,
           }}
         >
-          {saving ? "Saving..." : "Save Quiz"}
+          {saving ? "Saving..." : "💾 Save Quiz"}
         </button>
       </div>
     );

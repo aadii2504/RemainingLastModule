@@ -1,4 +1,6 @@
 using System.Text;
+using Serilog;
+using MyProject.Api.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -9,7 +11,20 @@ using MyProject.Api.Repositories.Interfaces;
 using MyProject.Api.Services;
 using MyProject.Api.Services.Interfaces;
 
-var builder = WebApplication.CreateBuilder(args);
+// Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+try
+{
+    Log.Information("Starting web application");
+
+    var builder = WebApplication.CreateBuilder(args);
+
+    // Add Serilog
+    builder.Host.UseSerilog();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -116,8 +131,23 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 
-app.UseAuthentication();
-app.UseAuthorization();
+// Add global exception handling middleware
+    app.UseMiddleware<GlobalExceptionMiddleware>();
 
-app.MapControllers();
-app.Run();
+    // Add Serilog request logging
+    app.UseSerilogRequestLogging();
+
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    app.MapControllers();
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
